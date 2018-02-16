@@ -293,7 +293,7 @@ oppia.directive('graphViz', [
 
           $scope.VERTEX_RADIUS = graphDetailService.VERTEX_RADIUS;
           $scope.EDGE_WIDTH = graphDetailService.EDGE_WIDTH;
-          $scope.selectedEdgeWeightValue = 0;
+          $scope.selectedEdgeWeightValue = 0 ;
           $scope.shouldShowWrongWeightWarning = false;
 
           $scope.$on(EVENT_NEW_CARD_AVAILABLE, function() {

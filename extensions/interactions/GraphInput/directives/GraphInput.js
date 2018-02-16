@@ -623,7 +623,7 @@ oppia.directive('graphViz', [
           };
 
           $scope.onUpdateEdgeWeight = function() {
-            if(angular.isNumber($scope.selectedEdgeWeightValue)) {
+            if (angular.isNumber($scope.selectedEdgeWeightValue)) {
               $scope.graph.edges[$scope.state.selectedEdge].weight = (
                 $scope.selectedEdgeWeightValue);
             }

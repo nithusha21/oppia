@@ -50,9 +50,9 @@ class Suggestion(object):
     """
 
     def __init__(
-        self, suggestion_type, entity_type, suggestion_sub_type, status,
-        suggestion_customization_args, author_id, reviewer_id, thread_id,
-        assigned_reviewer_id, payload):
+            self, suggestion_type, entity_type, suggestion_sub_type, status,
+            suggestion_customization_args, author_id, reviewer_id, thread_id,
+            assigned_reviewer_id, payload):
         """Initializes a suggestion object."""
 
         self.suggestion_type = suggestion_type

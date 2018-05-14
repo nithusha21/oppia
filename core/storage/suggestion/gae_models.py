@@ -76,6 +76,7 @@ SUGGESTION_MINIMUM_ROLE_FOR_REVIEW = {
     SUGGESTION_EDIT_STATE_CONTENT: feconf.ROLE_ID_EXPLORATION_EDITOR
 }
 
+
 class SuggestionModel(base_models.BaseModel):
     """Model to store suggestions made by Oppia users."""
 

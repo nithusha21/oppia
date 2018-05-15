@@ -28,7 +28,6 @@ class SuggestionDomainUnitTests(test_utils.GenericTestBase):
     REVIEWER_EMAIL = 'reviewer@example.com'
     ASSIGNED_REVIEWER_EMAIL = 'assigned_reviewer@example.com'
 
-    EXP_ID = 'exp0'
     THREAD_ID = 'thread_0'
 
     def setUp(self):

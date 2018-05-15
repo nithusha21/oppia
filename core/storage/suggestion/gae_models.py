@@ -121,3 +121,66 @@ class SuggestionModel(base_models.BaseModel):
     #   entity_type: The type of entity being added.
     #   entity_data: The data that is needed to create the entity.
     payload = ndb.JsonProperty(required=True, indexed=False)
+
+    @classmethod
+    def get_instance_id(
+        cls, suggestion_type, entity_type, thread_id, entity_id=''):
+        """Concatenates various parameters and gives the ID of the suggestion
+        model.
+
+        Args:
+            suggestion_type: str. The type of the suggestion.
+            entity_type: str. The type of entity being edited/added.
+            thread_id: str. The ID of the feedback thread linked to the
+                suggestion.
+            entity_id: str(optional). The ID of the entity being edited. If a
+                new entity is being added, "" is passed.
+
+        Returns:
+            str. The full instance ID for the suggestion.
+        """
+        if entity_id == '':
+            return  '.'.join([suggestion_type, entity_type, thread_id])
+        return '.'.join([suggestion_type, entity_type, thread_id, entity_id])
+
+    @classmethod
+    def create(
+        cls, suggestion_type, entity_type, suggestion_sub_type, status,
+        suggestion_customization_args, author_id, reviewer_id, thread_id,
+        assigned_reviewer_id, payload):
+        """Creates a new SuggestionModel entry.
+
+        Args:
+             Args:
+            suggestion_type: str. The type of the suggestion.
+            entity_type: str. The type of entity being edited/added.
+            suggestion_sub_type: str. The sub type of the suggestion.
+            status: str. The status of the suggestion.
+            suggestion_customization_args: dict. Additional parameters to know
+                the category of the contributions.
+            author_id: str. The ID of the user who submitted the suggestion.
+            reviewer_id: str. The ID of the reviewer who has accepted the
+                suggestion.
+            thread_id: str. The ID of the feedback thread linked to the
+                suggestion.
+            assigned_reviewer_id: str. The ID of the user assigned to
+                review the suggestion.
+            payload: dict. The actual content of the suggestion. The contents
+                depend on the type of suggestion.
+
+        Raises:
+            Exception: There is already a suggestion with the given id.
+        """
+        instance_id = cls.get_instance_id(
+            suggestion_type, entity_type, thread_id, payload['entity_id'])
+
+        if cls.get_by_id(instance_id):
+            raise Exception('There is already a suggestion with the given'
+                ' id: %s' % instance_id)
+
+        cls(id=instance_id, suggestion_type=suggestion_type,
+            entity_type=entity_type, suggestion_sub_type=suggestion_sub_type,
+            status=status,
+            suggestion_customization_args=suggestion_customization_args,
+            author_id=author_id, reviewer_id=reviewer_id, thread_id=thread_id,
+            assigned_reviewer_id=assigned_reviewer_id, payload=payload).put()

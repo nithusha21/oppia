@@ -26,6 +26,7 @@ import feconf
 DEFAULT_SUGGESTION_THREAD_SUBJECT = 'Suggestion from a learner'
 DEFAULT_SUGGESTION_THREAD_INITIAL_MESSAGE = ''
 
+
 def validate_suggestion_payload(suggestion_type, payload):
     """Checks whether the suggestion payload has all the necessary content for
     the given type of suggestion.
@@ -43,8 +44,8 @@ def validate_suggestion_payload(suggestion_type, payload):
             return False
     elif suggestion_type == suggestion_models.SUGGESTION_TYPE_EDIT:
         if not (
-            'entity_id' in payload and'entity_version_number' in payload and
-            'change_list' in payload):
+                'entity_id' in payload and'entity_version_number' in payload and
+                'change_list' in payload):
             return False
     return True
 
@@ -80,16 +81,17 @@ def create_suggestion(
         if entity_type == suggestion_models.ENTITY_TYPE_EXPLORATION:
             if suggestion_type == suggestion_models.SUGGESTION_TYPE_EDIT:
                 # TODO (nithesh): Delink feedback threads from explorations.
-                thread_id = feedback_services._create_models_for_thread_and_first_message( # pylint: disable=line-too-long
+                thread_id = feedback_services.create_thread(
                     payload['entity_id'], None, author_id, description,
-                    DEFAULT_SUGGESTION_THREAD_SUBJECT, True)
+                    DEFAULT_SUGGESTION_THREAD_SUBJECT)
         suggestion_models.SuggestionModel.create(
             suggestion_type, entity_type, suggestion_sub_type,
             suggestion_models.STATUS_IN_REVIEW, suggestion_customization_args,
             author_id, reviewer_id, thread_id, assigned_reviewer_id, payload)
     else:
         raise Exception('Cannot create suggestion as invalid suggestion payload'
-            ' is provided')
+                        ' is provided')
+
 
 def get_suggestion_from_model(suggestion_model):
     """Converts the given SuggestionModel to a Suggestion object
@@ -107,6 +109,7 @@ def get_suggestion_from_model(suggestion_model):
         suggestion_model.author_id, suggestion_model.reviewer_id,
         suggestion_model.thread_id, suggestion_model.assigned_reviewer_id,
         suggestion_model.payload)
+
 
 def get_suggestion(suggestion_type, entity_type, thread_id, entity_id=''):
     """Finds a suggestion by the instance ID which is created as a combination
@@ -128,6 +131,7 @@ def get_suggestion(suggestion_type, entity_type, thread_id, entity_id=''):
     model = suggestion_models.SuggestionModel.get_by_id(suggestion_id)
 
     return get_suggestion_from_model(model) if model else None
+
 
 def update_suggestion(suggestion):
     """Updates the given sugesstion. The properties that can be edited are the
@@ -158,6 +162,7 @@ def update_suggestion(suggestion):
         'entity_data']
     suggestion_model.put()
 
+
 def is_suggestion_valid(suggestion, reviewer_id):
     """Validates a suggestion. This function should be called before accepting
     the suggestion.
@@ -175,11 +180,11 @@ def is_suggestion_valid(suggestion, reviewer_id):
 
     if suggestion.status == suggestion_models.STATUS_IN_REVIEW:
         if (
-            suggestion.suggestion_type ==
-            suggestion_models.SUGGESTION_TYPE_EDIT):
+                suggestion.suggestion_type ==
+                suggestion_models.SUGGESTION_TYPE_EDIT):
             if (
-                suggestion.suggestion_sub_type ==
-                suggestion_models.SUGGESTION_EDIT_STATE_CONTENT):
+                    suggestion.suggestion_sub_type ==
+                    suggestion_models.SUGGESTION_EDIT_STATE_CONTENT):
                 states = exp_services.get_exploration_by_id(
                     suggestion.payload['entity_id']).states
                 state = suggestion.payload['change_list']['state_name']
@@ -187,11 +192,12 @@ def is_suggestion_valid(suggestion, reviewer_id):
                     suggestion.status = suggestion_models.STATUS_INVALID
                     update_suggestion(suggestion)
                     feedback_services.create_message(
-                        suggestion.payload['entity_id'],suggestion.thread_id,
+                        suggestion.payload['entity_id'], suggestion.thread_id,
                         reviewer_id, feedback_models.STATUS_CHOICES_IGNORED,
                         None, 'The suggestion is not valid.')
                     return False
     return True
+
 
 def is_suggestion_handled(suggestion):
     """Checks if the suggestion has been handled.
@@ -203,7 +209,8 @@ def is_suggestion_handled(suggestion):
     Returns:
         bool. Whether the suggestion has been handled or not.
     """
-    return not (suggestion.status == suggestion_models.STATUS_IN_REVIEW)
+    return not suggestion.status == suggestion_models.STATUS_IN_REVIEW
+
 
 def get_commit_message_for_suggestion(author_username, commit_message):
     """Returns a modified commit message for an accepted suggestion.
@@ -224,6 +231,7 @@ def get_commit_message_for_suggestion(author_username, commit_message):
     return '%s %s: %s' % (
         feconf.COMMIT_MESSAGE_ACCEPTED_SUGGESTION_PREFIX,
         author_username, commit_message)
+
 
 def accept_suggestion(suggestion, reviewer_id, commit_message):
     """Accepts the given suggestion after validating it.
@@ -254,10 +262,13 @@ def accept_suggestion(suggestion, reviewer_id, commit_message):
         commit_message, is_suggestion=True)
     suggestion.status = suggestion_models.STATUS_ACCEPTED
     suggestion.reviewer_id = reviewer_id
-    feedback_services.create_message(suggestion.payload['entity_id'],
-        suggestion.thread_id, reviewer_id, feedback_models.STATUS_CHOICES_FIXED,
-        None, 'Accepted by %s' % reviewer_id)
+    feedback_services.create_message(
+                                       suggestion.payload['entity_id'],
+                                       suggestion.thread_id, reviewer_id,
+                                       feedback_models.STATUS_CHOICES_FIXED,
+                                       None, 'Accepted by %s' % reviewer_id)
     update_suggestion(suggestion)
+
 
 def reject_suggestion(suggestion, reviewer_id):
     """Rejects the suggestion.
@@ -274,8 +285,9 @@ def reject_suggestion(suggestion, reviewer_id):
         raise Exception('The suggestion has already been accepted/rejected.')
     suggestion.status = suggestion_models.STATUS_REJECTED
     suggestion.reviewer_id = reviewer_id
-    feedback_services.create_message(suggestion.payload['entity_id'],
-        suggestion.thread_id, reviewer_id,
-        feedback_models.STATUS_CHOICES_IGNORED, None,
-        'Rejected by %s' % reviewer_id)
+    feedback_services.create_message(
+                                       suggestion.payload['entity_id'],
+                                       suggestion.thread_id, reviewer_id,
+                                       feedback_models.STATUS_CHOICES_IGNORED,
+                                       None, 'Rejected by %s' % reviewer_id)
     update_suggestion(suggestion)

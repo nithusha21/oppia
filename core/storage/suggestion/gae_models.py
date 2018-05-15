@@ -124,7 +124,7 @@ class SuggestionModel(base_models.BaseModel):
 
     @classmethod
     def get_instance_id(
-        cls, suggestion_type, entity_type, thread_id, entity_id=''):
+            cls, suggestion_type, entity_type, thread_id, entity_id=''):
         """Concatenates various parameters and gives the ID of the suggestion
         model.
 
@@ -145,9 +145,9 @@ class SuggestionModel(base_models.BaseModel):
 
     @classmethod
     def create(
-        cls, suggestion_type, entity_type, suggestion_sub_type, status,
-        suggestion_customization_args, author_id, reviewer_id, thread_id,
-        assigned_reviewer_id, payload):
+            cls, suggestion_type, entity_type, suggestion_sub_type, status,
+            suggestion_customization_args, author_id, reviewer_id, thread_id,
+            assigned_reviewer_id, payload):
         """Creates a new SuggestionModel entry.
 
         Args:
@@ -176,7 +176,7 @@ class SuggestionModel(base_models.BaseModel):
 
         if cls.get_by_id(instance_id):
             raise Exception('There is already a suggestion with the given'
-                ' id: %s' % instance_id)
+                            ' id: %s' % instance_id)
 
         cls(id=instance_id, suggestion_type=suggestion_type,
             entity_type=entity_type, suggestion_sub_type=suggestion_sub_type,
@@ -199,7 +199,7 @@ class SuggestionModel(base_models.BaseModel):
         """
         return cls.get_all().filter(
             cls.suggestion_sub_type == suggestion_sub_type).fetch(
-            feconf.DEFAULT_QUERY_LIMIT)
+                feconf.DEFAULT_QUERY_LIMIT)
 
     @classmethod
     def get_suggestions_by_author(cls, author_id):
@@ -230,7 +230,7 @@ class SuggestionModel(base_models.BaseModel):
         """
         return cls.get_all().filter(
             cls.assigned_reviewer_id == assigned_reviewer_id).fetch(
-            feconf.DEFAULT_QUERY_LIMIT)
+                feconf.DEFAULT_QUERY_LIMIT)
 
     @classmethod
     def get_suggestions_reviewed_by(cls, reviewer_id):

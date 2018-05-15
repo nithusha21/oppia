@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Tests for suggestion related services"""
+"""Tests for suggestion related services."""
 
 from core.domain import exp_services
 from core.domain import feedback_services
-from core.domain import suggestion_domain
 from core.domain import suggestion_services
 from core.platform import models
 from core.tests import test_utils
 
 (suggestion_models, feedback_models) = models.Registry.import_models([
     models.NAMES.suggestion, models.NAMES.feedback])
+
 
 class SuggestionServicesUnitTests(test_utils.GenericTestBase):
     """Test the functions in suggestion_services."""
@@ -120,7 +120,7 @@ class SuggestionServicesUnitTests(test_utils.GenericTestBase):
                 expected_suggestion_dict, observed_suggestion.to_dict())
 
     def check_commit_message(
-        self, unused_user_id, unused_exploration_id, unused_change_list,
+            self, unused_user_id, unused_exploration_id, unused_change_list,
             commit_message, is_suggestion):
         self.assertTrue(is_suggestion)
         self.assertEqual(
@@ -160,7 +160,8 @@ class SuggestionServicesUnitTests(test_utils.GenericTestBase):
                 thread_messages = feedback_services.get_messages(
                     self.payload['entity_id'], self.THREAD_ID)
                 last_message = thread_messages[len(thread_messages) - 1]
-                self.assertEqual(last_message.text, 'Accepted by %s' % self.reviewer_id)
+                self.assertEqual(
+                    last_message.text, 'Accepted by %s' % self.reviewer_id)
 
     def test_accept_suggestion_handled_suggestion_failure(self):
         with self.swap(
@@ -259,7 +260,7 @@ class SuggestionServicesUnitTests(test_utils.GenericTestBase):
                 with self.assertRaisesRegexp(
                     Exception, 'Commit message cannot be empty.'):
                     suggestion_services.accept_suggestion(
-                    suggestion, self.reviewer_id, self.EMPTY_COMMIT_MESSAGE)
+                        suggestion, self.reviewer_id, self.EMPTY_COMMIT_MESSAGE)
 
     def test_reject_suggestion_successfully(self):
         with self.swap(
@@ -337,6 +338,7 @@ class SuggestionServicesUnitTests(test_utils.GenericTestBase):
             self.THREAD_ID, self.payload['entity_id'])
         self.assertEqual(
             suggestion.status, suggestion_models.STATUS_REJECTED)
+
 
 class SuggestionValidationUnitTests(test_utils.GenericTestBase):
     """Tests the is_suggestion_valid function in suggestion_services.py

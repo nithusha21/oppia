@@ -14,15 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Tests for the suggestion gae_models"""
+"""Tests for the suggestion gae_models."""
 
 from core.platform import models
 from core.tests import test_utils
 
 (suggestion_models,) = models.Registry.import_models([models.NAMES.suggestion])
 
+
 class SuggestionModelUnitTests(test_utils.GenericTestBase):
-    """Tests for the suggestionModel class"""
+    """Tests for the suggestionModel class."""
 
     customization_args = {
         'contribution_type': 'translation',
@@ -106,7 +107,7 @@ class SuggestionModelUnitTests(test_utils.GenericTestBase):
     def test_fail_create_object(self):
         with self.assertRaisesRegexp(
             Exception, 'There is already a suggestion with the given id: '
-                                     'edit.exploration.thread_1.exp1'):
+                       'edit.exploration.thread_1.exp1'):
             suggestion_models.SuggestionModel.create(
                 suggestion_models.SUGGESTION_TYPE_EDIT,
                 suggestion_models.ENTITY_TYPE_EXPLORATION,
@@ -154,6 +155,7 @@ class SuggestionModelUnitTests(test_utils.GenericTestBase):
         self.assertEqual(
             len(suggestion_models.SuggestionModel.get_suggestions_reviewed_by(
                 'reviewer_3')), 1)
+
     def test_get_suggestions_by_status(self):
         self.assertEqual(
             len(suggestion_models.SuggestionModel.get_suggestions_by_status(

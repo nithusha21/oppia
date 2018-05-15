@@ -159,7 +159,7 @@ def update_suggestion(suggestion):
             'change_list']
     elif suggestion.suggestion_type == suggestion_models.SUGGESTION_TYPE_ADD:
         suggestion_model.payload['entity_data'] = suggestion.payload[
-        'entity_data']
+            'entity_data']
     suggestion_model.put()
 
 
@@ -263,10 +263,9 @@ def accept_suggestion(suggestion, reviewer_id, commit_message):
     suggestion.status = suggestion_models.STATUS_ACCEPTED
     suggestion.reviewer_id = reviewer_id
     feedback_services.create_message(
-                                       suggestion.payload['entity_id'],
-                                       suggestion.thread_id, reviewer_id,
-                                       feedback_models.STATUS_CHOICES_FIXED,
-                                       None, 'Accepted by %s' % reviewer_id)
+        suggestion.payload['entity_id'], suggestion.thread_id, reviewer_id,
+        feedback_models.STATUS_CHOICES_FIXED, None,
+        'Accepted by %s' % reviewer_id)
     update_suggestion(suggestion)
 
 
@@ -286,8 +285,7 @@ def reject_suggestion(suggestion, reviewer_id):
     suggestion.status = suggestion_models.STATUS_REJECTED
     suggestion.reviewer_id = reviewer_id
     feedback_services.create_message(
-                                       suggestion.payload['entity_id'],
-                                       suggestion.thread_id, reviewer_id,
-                                       feedback_models.STATUS_CHOICES_IGNORED,
-                                       None, 'Rejected by %s' % reviewer_id)
+        suggestion.payload['entity_id'], suggestion.thread_id, reviewer_id,
+        feedback_models.STATUS_CHOICES_IGNORED, None,
+        'Rejected by %s' % reviewer_id)
     update_suggestion(suggestion)

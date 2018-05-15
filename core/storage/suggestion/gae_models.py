@@ -184,3 +184,79 @@ class SuggestionModel(base_models.BaseModel):
             suggestion_customization_args=suggestion_customization_args,
             author_id=author_id, reviewer_id=reviewer_id, thread_id=thread_id,
             assigned_reviewer_id=assigned_reviewer_id, payload=payload).put()
+
+    @classmethod
+    def get_suggestions_by_sub_type(cls, suggestion_sub_type):
+        """Gets all suggestions of a particular type
+
+        Args:
+            suggestion_sub_type: str. The sub type of the suggestions.
+
+        Returns:
+            list(SuggestionModel). A list of suggestions of the given
+                sub type, upto a maximum of feconf.DEFAULT_QUERY_LIMIT
+                suggestions.
+        """
+        return cls.get_all().filter(
+            cls.suggestion_sub_type == suggestion_sub_type).fetch(
+            feconf.DEFAULT_QUERY_LIMIT)
+
+    @classmethod
+    def get_suggestions_by_author(cls, author_id):
+        """Gets all suggestions created by the given author.
+
+        Args:
+            author_id: str. The author of the suggestion.
+
+        Returns:
+            list(SuggestionModel). A list of suggestions by the given author,
+            upto a maximum of feconf.DEFAULT_QUERY_LIMIT suggestions.
+        """
+        return cls.get_all().filter(
+            cls.author_id == author_id).fetch(feconf.DEFAULT_QUERY_LIMIT)
+
+    @classmethod
+    def get_suggestions_assigned_to_reviewer(cls, assigned_reviewer_id):
+        """Gets all suggestions assigned to the given user for review.
+
+        Args:
+            assigned_reviewer_id: str. The reviewer assigned to review the
+                suggestion.
+
+        Returns:
+            list(SuggestionModel). A list of suggestions assigned to the given
+                user for review, upto a maximum of feconf.DEFAULT_QUERY_LIMIT
+                suggestions.
+        """
+        return cls.get_all().filter(
+            cls.assigned_reviewer_id == assigned_reviewer_id).fetch(
+            feconf.DEFAULT_QUERY_LIMIT)
+
+    @classmethod
+    def get_suggestions_reviewed_by(cls, reviewer_id):
+        """Gets all suggestions that have been reviewed by the given user.
+
+        Args:
+            reviewer_id: str. The reviewer of the suggestion.
+
+        Returns:
+            list(SuggestionModel). A list of suggestions reviewed by the given
+                user, upto a maximum of feconf.DEFAULT_QUERY_LIMIT
+                suggestions.
+        """
+        return cls.get_all().filter(
+            cls.reviewer_id == reviewer_id).fetch(feconf.DEFAULT_QUERY_LIMIT)
+
+    @classmethod
+    def get_suggestions_by_status(cls, status):
+        """Gets all suggestions with the given status.
+
+        Args:
+            status: str. The status of the suggestion.
+
+        Returns:
+            list(SuggestionModel). A list of suggestions witj the given status,
+            upto a maximum of feconf.DEFAULT_QUERY_LIMIT suggestions.
+        """
+        return cls.get_all().filter(
+            cls.status == status).fetch(feconf.DEFAULT_QUERY_LIMIT)

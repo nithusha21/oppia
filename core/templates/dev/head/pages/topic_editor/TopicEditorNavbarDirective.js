@@ -36,12 +36,17 @@ oppia.directive('topicEditorNavbar', [
             EVENT_UNDO_REDO_SERVICE_CHANGE_APPLIED) {
           $scope.topicId = UrlService.getTopicIdFromUrl();
           $scope.topic = TopicEditorStateService.getTopic();
+          $scope.validationIssues = [];
           $scope.topicRights = TopicEditorStateService.getTopicRights();
           $scope.isSaveInProgress = TopicEditorStateService.isSavingTopic;
           $scope.getTabStatuses = TopicEditorRoutingService.getTabStatuses;
           $scope.selectMainTab = TopicEditorRoutingService.navigateToMainTab;
           $scope.selectSubtopicsTab =
             TopicEditorRoutingService.navigateToSubtopicsTab;
+
+          var _validateTopic = function() {
+            $scope.validationIssues = $scope.topic.validate();
+          };
 
           $scope.publishTopic = function() {
             if (!$scope.topicRights.canPublishTopic()) {
@@ -54,12 +59,23 @@ oppia.directive('topicEditorNavbar', [
               });
           };
 
+          $scope.discardChanges = function() {
+            UndoRedoService.clearChanges();
+            TopicEditorStateService.loadTopic($scope.topicId);
+          };
+
           $scope.getChangeListLength = function() {
             return UndoRedoService.getChangeCount();
           };
 
           $scope.isTopicSaveable = function() {
-            return $scope.getChangeListLength() > 0;
+            return (
+              $scope.getChangeListLength() > 0 &&
+              $scope.getWarningsCount() === 0);
+          };
+
+          $scope.getWarningsCount = function() {
+            return $scope.validationIssues.length;
           };
 
           $scope.saveChanges = function() {
@@ -98,6 +114,11 @@ oppia.directive('topicEditorNavbar', [
                 TopicEditorStateService.setTopicRights($scope.topicRights);
               });
           };
+
+          $scope.$on(EVENT_TOPIC_INITIALIZED, _validateTopic);
+          $scope.$on(EVENT_TOPIC_REINITIALIZED, _validateTopic);
+          $scope.$on(
+            EVENT_UNDO_REDO_SERVICE_CHANGE_APPLIED, _validateTopic);
         }
       ]
     };

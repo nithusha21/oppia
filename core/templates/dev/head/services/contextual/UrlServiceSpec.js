@@ -96,5 +96,53 @@ describe('Url Service', function() {
     expect(function() {
       UrlService.getTopicIdFromUrl();
     }).toThrow();
+
+    mockLocation.pathname = '/topiceditor/abcdefgijklm';
+    expect(function() {
+      UrlService.getTopicIdFromUrl();
+    }).toThrow();
+
+    mockLocation.pathname = '/topic_editor';
+    expect(function() {
+      UrlService.getTopicIdFromUrl();
+    }).toThrow();
+  });
+
+  it('should correctly retrieve story id from url', function() {
+    mockLocation.pathname = '/story_editor/abcdefgijklm';
+    expect(function(){
+      UrlService.getStoryIdFromUrl();
+    }).toThrow();
+
+    mockLocation.pathname = '/storyeditor/abcdefgijklm/012345678901';
+    expect(function(){
+      UrlService.getStoryIdFromUrl();
+    }).toThrow();
+
+    mockLocation.pathname = '/story_editor/abcdefgijlm/012345678901';
+    expect(function(){
+      UrlService.getStoryIdFromUrl();
+    }).toThrow();
+
+    mockLocation.pathname = '/story_editor/abcdefgijklm/01234578901';
+    expect(function() {
+      UrlService.getStoryIdFromUrl();
+    }).toThrow();
+
+    mockLocation.pathname = '/story_editor/abcdefgijklm/012345678901';
+    expect(
+      UrlService.getStoryIdFromUrl()
+    ).toEqual('012345678901');
+  });
+
+  it('should correctly retrieve skill id from url', function() {
+    mockLocation.pathname = '/skill_editor/abcdefghijkl';
+    expect(
+      UrlService.getSkillIdFromUrl()
+    ).toBe('abcdefghijkl');
+    mockLocation.pathname = '/skill_editor/abcdefghijk';
+    expect(function() {
+      UrlService.getSkillIdFromUrl();
+    }).toThrow();
   });
 });

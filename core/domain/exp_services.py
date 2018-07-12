@@ -39,6 +39,7 @@ from core.domain import email_subscription_services
 from core.domain import exp_domain
 from core.domain import feedback_services
 from core.domain import fs_domain
+from core.domain import html_cleaner
 from core.domain import rights_manager
 from core.domain import search_services
 from core.domain import stats_services
@@ -896,13 +897,9 @@ def _save_exploration(committer_id, exploration, commit_message, change_list):
     # Trigger exploration issues model updation.
     if feconf.ENABLE_PLAYTHROUGHS:
         exp_versions_diff = exp_domain.ExplorationVersionsDiff(change_list)
-        revert_to_version = None
-        if change_list:
-            if change_list[0].cmd == (
-                    exp_models.ExplorationModel.CMD_REVERT_COMMIT):
-                revert_to_version = change_list[0].version_number
         stats_services.update_exp_issues_for_new_exp_version(
-            exploration, exp_versions_diff, revert_to_version)
+            exploration, exp_versions_diff=exp_versions_diff,
+            revert_to_version=None)
 
     # Save state id mapping model for exploration.
     create_and_save_state_id_mapping_model(exploration, change_list)
@@ -1426,6 +1423,13 @@ def revert_exploration(
     # not add the committer of the revert to the list of contributors.
     update_exploration_summary(exploration_id, None)
 
+    if feconf.ENABLE_PLAYTHROUGHS:
+        current_exploration = get_exploration_by_id(
+            exploration_id, version=current_version)
+        stats_services.update_exp_issues_for_new_exp_version(
+            current_exploration, exp_versions_diff=None,
+            revert_to_version=revert_to_version)
+
     # Save state id mapping model for the new exploration version.
     create_and_save_state_id_mapping_model_for_reverted_exploration(
         exploration_id, current_version, revert_to_version)
@@ -1620,6 +1624,37 @@ def get_next_page_of_all_non_private_commits(
         entry.commit_cmds, entry.version, entry.post_commit_status,
         entry.post_commit_community_owned, entry.post_commit_is_private
     ) for entry in results], new_urlsafe_start_cursor, more)
+
+
+def get_image_filenames_from_exploration(exploration):
+    """Get the image filenames from the exploration.
+
+    Args:
+        exploration: Exploration object. The exploration itself.
+
+    Returns:
+       list(str). List containing the name of the image files in exploration.
+    """
+    filenames = []
+    for state in exploration.states.itervalues():
+        if state.interaction.id == 'ImageClickInput':
+            filenames.append(state.interaction.customization_args[
+                'imageAndRegions']['value']['imagePath'])
+
+    html_list = exploration.get_all_html_content_strings()
+    rte_components_in_exp = []
+    for html_string in html_list:
+        rte_components_in_exp = (
+            rte_components_in_exp + html_cleaner.get_rte_components(
+                html_string))
+
+    for rte_comp in rte_components_in_exp:
+        if 'id' in rte_comp and (
+                str(rte_comp['id']) == 'oppia-noninteractive-image'):
+            filenames.append(
+                rte_comp['customization_args']['filepath-with-value'])
+    # This is done because the ItemSelectInput may repeat the image names.
+    return list(set(filenames))
 
 
 def get_number_of_ratings(ratings):

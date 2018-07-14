@@ -269,14 +269,6 @@ ACCEPTED_AUDIO_EXTENSIONS = {
     'mp3': ['audio/mp3']
 }
 
-
-# A string containing the disallowed characters in state or exploration names.
-# The underscore is needed because spaces in names must be converted to
-# underscores when displayed as part of a URL or key. The other conventions
-# here are derived from the Wikipedia guidelines for naming articles.
-INVALID_NAME_CHARS = u':#/|_%<>[]{}\ufffd\\' + chr(127)
-for ind in range(32):
-    INVALID_NAME_CHARS += chr(ind)
 # Prefix for data sent from the server to the client via JSON.
 XSSI_PREFIX = ')]}\'\n'
 # A regular expression for alphanumeric characters.
@@ -315,10 +307,11 @@ MAILGUN_API_KEY = None
 # If the Mailgun email API is used, the "None" below should be replaced
 # with the Mailgun domain name (ending with mailgun.org).
 MAILGUN_DOMAIN_NAME = None
-# Domain name for email address.
-INCOMING_EMAILS_DOMAIN_NAME = 'example.com'
+
 # Committer id for system actions.
 SYSTEM_COMMITTER_ID = 'admin'
+# Domain name for email address.
+INCOMING_EMAILS_DOMAIN_NAME = 'example.com'
 SYSTEM_EMAIL_ADDRESS = 'system@example.com'
 ADMIN_EMAIL_ADDRESS = 'testadmin@example.com'
 NOREPLY_EMAIL_ADDRESS = 'noreply@example.com'
@@ -618,6 +611,7 @@ FRACTIONS_LANDING_PAGE_URL = '/fractions'
 GENERAL_SUGGESTION_ACTION_URL_PREFIX = '/generalsuggestionactionhandler'
 GENERAL_SUGGESTION_LIST_URL_PREFIX = '/generalsuggestionlisthandler'
 GENERAL_SUGGESTION_URL_PREFIX = '/generalsuggestionhandler'
+GENERAL_SUGGESTION_RESUBMIT_URL_PREFIX = '/generalsuggestionresubmithandler'
 LEARNER_DASHBOARD_URL = '/learner_dashboard'
 LEARNER_DASHBOARD_DATA_URL = '/learnerdashboardhandler/data'
 LEARNER_DASHBOARD_IDS_DATA_URL = '/learnerdashboardidshandler/data'
@@ -706,9 +700,6 @@ EVENT_TYPE_START_EXPLORATION = 'start'
 EVENT_TYPE_ACTUAL_START_EXPLORATION = 'actual_start'
 EVENT_TYPE_MAYBE_LEAVE_EXPLORATION = 'leave'
 EVENT_TYPE_COMPLETE_EXPLORATION = 'complete'
-
-ACTIVITY_STATUS_PRIVATE = 'private'
-ACTIVITY_STATUS_PUBLIC = 'public'
 
 # Play type constants.
 PLAY_TYPE_PLAYTEST = 'playtest'
@@ -832,9 +823,6 @@ LIBRARY_PAGE_MODE_SEARCH = 'search'
 DEFAULT_TOPIC_SIMILARITY = 0.5
 SAME_TOPIC_SIMILARITY = 1.0
 
-SYSTEM_USERNAMES = [SYSTEM_COMMITTER_ID, MIGRATION_BOT_USERNAME]
-SYSTEM_USER_IDS = [SYSTEM_COMMITTER_ID, MIGRATION_BOT_USERNAME]
-
 # The following are all page descriptions for the meta tag.
 ABOUT_PAGE_DESCRIPTION = (
     'Oppia is an open source learning platform that connects a community of '
@@ -885,7 +873,6 @@ TERMS_PAGE_DESCRIPTION = (
     'distributing learning material.')
 THANKS_PAGE_DESCRIPTION = (
     'Thank you for donating to The Oppia Foundation.')
-SITE_NAME = 'Oppia.org'
 
 # The type of the response returned by a handler when an exception is raised.
 HANDLER_TYPE_HTML = 'html'

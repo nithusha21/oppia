@@ -40,11 +40,13 @@ TARGET_TYPE_CHOICES = [
 STATUS_ACCEPTED = 'accepted'
 STATUS_IN_REVIEW = 'review'
 STATUS_REJECTED = 'rejected'
+STATUS_HARD_REJECTED = 'hardRejected'
 
 STATUS_CHOICES = [
     STATUS_ACCEPTED,
     STATUS_IN_REVIEW,
-    STATUS_REJECTED
+    STATUS_REJECTED,
+    STATUS_HARD_REJECTED
 ]
 
 # Constants defining various suggestion types.
@@ -243,6 +245,5 @@ class GeneralSuggestionModel(base_models.BaseModel):
         threshold_time = (
             datetime.datetime.utcnow() - datetime.timedelta(
                 0, 0, 0, THRESHOLD_TIME_BEFORE_ACCEPT_IN_MSECS))
-        return cls.get_all().filter(
-            cls.status.IN([STATUS_IN_REVIEW, STATUS_RECEIVED])).filter(
-                cls.last_updated < threshold_time).fetch()
+        return cls.get_all().filter(cls.status == STATUS_IN_REVIEW).filter(
+            cls.last_updated < threshold_time).fetch()

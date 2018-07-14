@@ -339,6 +339,30 @@ class SuggestionServicesUnitTests(test_utils.GenericTestBase):
         self.assertEqual(
             suggestion.status, suggestion_models.STATUS_REJECTED)
 
+    def test_hard_reject_suggestion(self):
+        with self.swap(
+            feedback_models.FeedbackThreadModel,
+            'generate_new_thread_id', self.generate_thread_id):
+            with self.swap(
+                exp_services, 'get_exploration_by_id',
+                self.mock_get_exploration_by_id):
+                suggestion_services.create_suggestion(
+                    suggestion_models.SUGGESTION_TYPE_EDIT_STATE_CONTENT,
+                    suggestion_models.TARGET_TYPE_EXPLORATION,
+                    self.target_id, self.target_version_at_submission,
+                    self.author_id, self.change_cmd, 'test description',
+                    self.reviewer_id)
+        suggestion = suggestion_services.get_suggestion_by_id(
+            self.suggestion_id)
+
+        suggestion_services.hard_reject_suggestion_in_review(
+            suggestion, self.reviewer_id, 'hard reject')
+
+        suggestion = suggestion_services.get_suggestion_by_id(
+            self.suggestion_id)
+        self.assertEqual(
+            suggestion.status, suggestion_models.STATUS_HARD_REJECTED)
+
 
 class SuggestionGetServicesUnitTests(test_utils.GenericTestBase):
     score_category = (
@@ -609,6 +633,50 @@ class SuggestionIntegrationTests(test_utils.GenericTestBase):
             exploration.states['State 1'].content.html,
             'new content')
 
+        self.assertEqual(suggestion.status, suggestion_models.STATUS_ACCEPTED)
+
+    def test_resubmit_suggestion_after_reject(self):
+        with self.swap(
+            feedback_models.FeedbackThreadModel,
+            'generate_new_thread_id', self.generate_thread_id):
+            suggestion_services.create_suggestion(
+                suggestion_models.SUGGESTION_TYPE_EDIT_STATE_CONTENT,
+                suggestion_models.TARGET_TYPE_EXPLORATION,
+                self.EXP_ID, self.target_version_at_submission,
+                self.author_id, self.change_cmd, 'test description', None)
+
+        suggestion_id = 'exploration.' + self.THREAD_ID
+        suggestion = suggestion_services.get_suggestion_by_id(suggestion_id)
+
+        suggestion_services.reject_suggestion(
+            suggestion, self.reviewer_id, 'review message')
+
+        self.assertEqual(suggestion.status, suggestion_models.STATUS_REJECTED)
+
+        changed_content = exp_domain.SubtitledHtml(
+            'content', 'changed after review').to_dict()
+        change_cmd = {
+            'cmd': exp_domain.CMD_EDIT_STATE_PROPERTY,
+            'property_name': exp_domain.STATE_PROPERTY_CONTENT,
+            'state_name': 'State 1',
+            'old_value': None,
+            'new_value': changed_content
+        }
+
+        suggestion = suggestion_services.get_suggestion_by_id(suggestion_id)
+        suggestion_services.resubmit_suggestion_for_review(
+            suggestion, change_cmd)
+
+        suggestion = suggestion_services.get_suggestion_by_id(suggestion_id)
+        self.assertEqual(suggestion.status, suggestion_models.STATUS_IN_REVIEW)
+        self.assertDictEqual(suggestion.change_cmd.to_dict(), change_cmd)
+
+        suggestion_services.accept_suggestion(
+            suggestion, self.reviewer_id, self.COMMIT_MESSAGE, None)
+
+        exploration = exp_services.get_exploration_by_id(self.EXP_ID)
+        self.assertEqual(
+            exploration.states['State 1'].content.html, 'changed after review')
         self.assertEqual(suggestion.status, suggestion_models.STATUS_ACCEPTED)
 
 

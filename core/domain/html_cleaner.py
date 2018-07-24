@@ -19,7 +19,6 @@
 import HTMLParser
 import json
 import logging
-import re
 import urlparse
 
 import bleach
@@ -131,7 +130,7 @@ def get_rte_components(html_string):
     oppia_custom_tag_attrs = (
         rte_component_registry.Registry.get_tag_list_with_attrs())
     for tag_name in oppia_custom_tag_attrs:
-        component_tags = soup.find_all(tag_name)
+        component_tags = soup.find_all(name=tag_name)
         for component_tag in component_tags:
             component = {'id': tag_name}
             customization_args = {}
@@ -147,16 +146,6 @@ def get_rte_components(html_string):
     return components
 
 
-# Replace list to escape and unescape html strings.
-REPLACE_LIST = [
-    ('&', '&amp;'),
-    ('"', '&quot;'),
-    ('\'', '&#39;'),
-    ('<', '&lt;'),
-    ('>', '&gt;')
-]
-
-
 def escape_html(unescaped_html_data):
     """This functions escapes an unescaped HTML string.
 
@@ -166,8 +155,16 @@ def escape_html(unescaped_html_data):
     Returns:
         str. Escaped HTML string.
     """
+    # Replace list to escape html strings.
+    REPLACE_LIST_FOR_ESCAPING = [
+        ('&', '&amp;'),
+        ('"', '&quot;'),
+        ('\'', '&#39;'),
+        ('<', '&lt;'),
+        ('>', '&gt;')
+    ]
     escaped_html_data = unescaped_html_data
-    for replace_tuple in REPLACE_LIST:
+    for replace_tuple in REPLACE_LIST_FOR_ESCAPING:
         escaped_html_data = escaped_html_data.replace(
             replace_tuple[0], replace_tuple[1])
 
@@ -183,10 +180,18 @@ def unescape_html(escaped_html_data):
     Returns:
         str. Unescaped HTML string.
     """
+    # Replace list to unescape html strings.
+    REPLACE_LIST_FOR_UNESCAPING = [
+        ('&quot;', '"'),
+        ('&#39;', '\''),
+        ('&lt;', '<'),
+        ('&gt;', '>'),
+        ('&amp;', '&')
+    ]
     unescaped_html_data = escaped_html_data
-    for replace_tuple in REPLACE_LIST:
+    for replace_tuple in REPLACE_LIST_FOR_UNESCAPING:
         unescaped_html_data = unescaped_html_data.replace(
-            replace_tuple[1], replace_tuple[0])
+            replace_tuple[0], replace_tuple[1])
 
     return unescaped_html_data
 
@@ -270,7 +275,7 @@ def convert_to_textangular(html_data):
     html_data = convert_tag_contents_to_rte_format(
         html_data, convert_to_textangular)
 
-    soup = bs4.BeautifulSoup(html_data.encode('utf-8'), 'html.parser')
+    soup = bs4.BeautifulSoup(html_data.encode(encoding='utf-8'), 'html.parser')
 
     allowed_tag_list = (
         feconf.RTE_CONTENT_SPEC[
@@ -287,7 +292,7 @@ def convert_to_textangular(html_data):
     # we need to make blockquote the parent of p. Since this cannot
     # be distinguished after migration to p, this part is checked
     # before migration.
-    for blockquote in soup.findAll('blockquote'):
+    for blockquote in soup.findAll(name='blockquote'):
         if blockquote.parent.name == 'td':
             blockquote.parent.parent.wrap(soup.new_tag('blockquote'))
             blockquote.unwrap()
@@ -296,7 +301,7 @@ def convert_to_textangular(html_data):
     # in final output will span to multiple lines instead of all
     # items being in a single line. So, any p tag within
     # td tag is unwrapped.
-    for p in soup.findAll('p'):
+    for p in soup.findAll(name='p'):
         if p.parent.name == 'td':
             p.unwrap()
 
@@ -367,26 +372,27 @@ def convert_to_textangular(html_data):
     # Removal of tags can break the soup into parts which are continuous
     # and not wrapped in any tag. This part recombines the continuous
     # parts not wrapped in any tag.
-    soup = bs4.BeautifulSoup(unicode(soup).encode('utf-8'), 'html.parser')
+    soup = bs4.BeautifulSoup(
+        unicode(soup).encode(encoding='utf-8'), 'html.parser')
 
     # Ensure that blockquote tag is wrapped in an allowed parent.
-    for blockquote in soup.findAll('blockquote'):
+    for blockquote in soup.findAll(name='blockquote'):
         while blockquote.parent.name not in allowed_parent_list['blockquote']:
             blockquote.parent.unwrap()
 
     # Ensure that pre tag is not wrapped p tags.
-    for pre in soup.findAll('pre'):
+    for pre in soup.findAll(name='pre'):
         while pre.parent.name == 'p':
             pre.parent.unwrap()
 
     # Ensure that ol and ul are not wrapped in p tags.
     for tag_name in ['ol', 'ul']:
-        for tag in soup.findAll(tag_name):
+        for tag in soup.findAll(name=tag_name):
             while tag.parent.name == 'p':
                 tag.parent.unwrap()
 
     # Ensure that br tag is wrapped in an allowed parent.
-    for br in soup.findAll('br'):
+    for br in soup.findAll(name='br'):
         if br.parent.name == 'pre':
             br.insert_after('\n')
             br.unwrap()
@@ -395,7 +401,7 @@ def convert_to_textangular(html_data):
 
     # Ensure that b and i tags are wrapped in an allowed parent.
     for tag_name in ['b', 'i']:
-        for tag in soup.findAll(tag_name):
+        for tag in soup.findAll(name=tag_name):
             if tag.parent.name == 'oppia-noninteractive-link':
                 tag.parent.wrap(soup.new_tag(tag_name))
                 parent = tag.parent.parent
@@ -410,18 +416,18 @@ def convert_to_textangular(html_data):
 
     # Ensure that oppia inline components are wrapped in an allowed parent.
     for tag_name in OPPIA_INLINE_COMPONENTS:
-        for tag in soup.findAll(tag_name):
+        for tag in soup.findAll(name=tag_name):
             if tag.parent.name in ['blockquote', '[document]']:
                 wrap_with_siblings(tag, soup.new_tag('p'))
 
     # Ensure oppia link component is not a child of another link component.
-    for link in soup.findAll('oppia-noninteractive-link'):
+    for link in soup.findAll(name='oppia-noninteractive-link'):
         if link.parent.name == 'oppia-noninteractive-link':
             link.unwrap()
 
     # Ensure that oppia block components are wrapped in an allowed parent.
     for tag_name in OPPIA_BLOCK_COMPONENTS:
-        for tag in soup.findAll(tag_name):
+        for tag in soup.findAll(name=tag_name):
             if tag.parent.name in ['blockquote', '[document]']:
                 wrap_with_siblings(tag, soup.new_tag('p'))
 
@@ -431,13 +437,13 @@ def convert_to_textangular(html_data):
             content.wrap(soup.new_tag('p'))
 
     # Ensure that p tag has a valid parent.
-    for p in soup.findAll('p'):
+    for p in soup.findAll(name='p'):
         if p.parent.name != 'p' and (
                 p.parent.name not in allowed_parent_list['p']):
             p.parent.unwrap()
 
     # Ensure that p tag is not wrapped in p tag.
-    for p in soup.findAll('p'):
+    for p in soup.findAll(name='p'):
         if p.parent.name == 'p':
             child_tags = p.parent.contents
             index = 0
@@ -489,69 +495,76 @@ def convert_to_ckeditor(html_data):
     html_data = convert_tag_contents_to_rte_format(
         html_data, convert_to_ckeditor)
 
-    soup = bs4.BeautifulSoup(html_data.encode('utf-8'), 'html.parser')
+    soup = bs4.BeautifulSoup(html_data.encode(encoding='utf-8'), 'html.parser')
 
     # Replaces b tag with strong tag.
-    for b in soup.findAll('b'):
+    for b in soup.findAll(name='b'):
         b.name = 'strong'
 
     # Replaces i tag with em tag.
-    for i in soup.findAll('i'):
+    for i in soup.findAll(name='i'):
         i.name = 'em'
+
+    # Ensures li is not wrapped in li or p.
+    for li in soup.findAll(name='li'):
+        while li.parent.name in ['li', 'p']:
+            li.parent.unwrap()
+
+    LIST_TAGS = ['ol', 'ul']
+
+    # Ensure li is wrapped in ol/ul.
+    for li in soup.findAll(name='li'):
+        if li.parent.name not in LIST_TAGS:
+            new_parent = soup.new_tag('ul')
+            next_sib = list(li.next_siblings)
+            li.wrap(new_parent)
+            for sib in next_sib:
+                if sib.name == 'li':
+                    sib.wrap(new_parent)
+                else:
+                    break
+
+    # Ensure that the children of ol/ul are li/pre.
+    for tag_name in LIST_TAGS:
+        for tag in soup.findAll(name=tag_name):
+            for child in tag.children:
+                if child.name not in ['li', 'pre', 'ol', 'ul']:
+                    new_parent = soup.new_tag('li')
+                    next_sib = list(child.next_siblings)
+                    child.wrap(new_parent)
+                    for sib in next_sib:
+                        if sib.name not in ['li', 'pre']:
+                            sib.wrap(new_parent)
+                        else:
+                            break
 
     # This block wraps p tag in li tag if the parent of p is ol/ul tag. Also,
     # if the parent of p tag is pre tag, it unwraps the p tag.
-    for p in soup.findAll('p'):
+    for p in soup.findAll(name='p'):
         if p.parent.name == 'pre':
             p.unwrap()
-        elif p.parent.name in ['ol', 'ul']:
+        elif p.parent.name in LIST_TAGS:
             p.wrap(soup.new_tag('li'))
-
-    # Replaces <p><br><p> with <p>&nbsp;</p>.
-    for br in soup.findAll('br'):
-        parent_tag = br.parent
-        if parent_tag.name == 'p' and parent_tag.get_text() == '':
-            br.replaceWith('&nbsp;')
 
     # This block ensures that ol/ul tag is not a direct child of another ul/ol
     # tag. The conversion works as follows:
     # Invalid html: <ul><li>...</li><ul><ul><li>...</li></ul></ul></ul>
-    # Valid html: <ul><li>...</li><ul><li style="margin-left:40px;">...</li>
-    # </ul></ul>
+    # Valid html: <ul><li>...<ul><li>...</li></ul></li></ul>
     # i.e. if any ol/ul has parent as ol/ul and a previous sibling as li
-    # it is wrapped in it's previous sibling removing any margin styling.
-    # If there is no previous sibling, the tag is unwrapped and each of
-    # it's direct child is given an additional margin-left of 40px.
-    list_tags = ['ol', 'ul']
-    margin_re = re.compile('margin-left:([0-9]+)px;')
-    for tag_name in list_tags:
-        for tag in soup.findAll(tag_name):
-            if tag.parent.name in list_tags:
+    # it is wrapped in its previous sibling. If there is no previous sibling,
+    # the tag is unwrapped.
+    for tag_name in LIST_TAGS:
+        for tag in soup.findAll(name=tag_name):
+            if tag.parent.name in LIST_TAGS:
                 prev_sib = tag.previous_sibling
                 if prev_sib and prev_sib.name == 'li':
-                    if 'style' in tag.attrs:
-                        del tag['style']
+                    prev_sib.append(tag)
                 else:
-                    margin_value = 40
-                    if 'style' in tag.attrs:
-                        style = tag['style']
-                        # This is to obtain the margin value of the tag.
-                        margin_value += int(margin_re.search(style).group(1))
-
-                    for child in tag.children:
-                        child_margin_value = margin_value
-                        if 'style' in child.attrs:
-                            style = child['style']
-                            # This is to obtain the margin value of the child
-                            # tag.
-                            child_margin_value += int(
-                                margin_re.search(style).group(1))
-                        child['style'] = 'margin-left:%dpx;' % margin_value
                     tag.unwrap()
 
     # Move block components out of p, pre, strong and em tags.
     for tag_name in OPPIA_BLOCK_COMPONENTS:
-        for tag in soup.findAll(tag_name):
+        for tag in soup.findAll(name=tag_name):
             while tag.parent.name in ['p', 'pre', 'strong', 'em']:
                 new_parent_for_prev = soup.new_tag(tag.parent.name)
                 new_parent_for_next = soup.new_tag(tag.parent.name)
@@ -574,6 +587,21 @@ def convert_to_ckeditor(html_data):
     # should match and <br> and <br/> have same working,
     # so the tag has to be replaced in this way.
 
+    # Replaces <p><br></p> with <p>&nbsp;</p> and <pre>...<br>...</pre>
+    # with <pre>...\n...</pre>.
+    for br in soup.findAll(name='br'):
+        parent = br.parent
+        if parent.name == 'p' and len(parent.contents) == 1:
+            br.unwrap()
+            # BeautifulSoup automatically escapes &nbsp; to &amp;nbsp;.
+            # To safely add &nbsp in place of <br> tag we need the unicode
+            # string \xa0.
+            # Reference: https://stackoverflow.com/questions/26334461/.
+            parent.string = u'\xa0'
+        elif parent.name == 'pre':
+            br.insert_after('\n')
+            br.unwrap()
+
     return unicode(soup).replace('<br/>', '<br>')
 
 
@@ -592,12 +620,22 @@ def convert_tag_contents_to_rte_format(html_data, rte_conversion_fn):
     """
     soup = bs4.BeautifulSoup(html_data.encode('utf-8'), 'html.parser')
 
-    for collapsible in soup.findAll('oppia-noninteractive-collapsible'):
-        content_html = unescape_html(collapsible['content-with-value'])
-        collapsible['content-with-value'] = escape_html(
-            json.dumps(rte_conversion_fn(json.loads(content_html))))
+    for collapsible in soup.findAll(name='oppia-noninteractive-collapsible'):
+        # To ensure that collapsible tags have content-with-value attribute.
+        if 'content-with-value' not in collapsible.attrs or (
+                collapsible['content-with-value'] == ''):
+            collapsible['content-with-value'] = escape_html(json.dumps(''))
 
-    for tabs in soup.findAll('oppia-noninteractive-tabs'):
+        content_html = json.loads(
+            unescape_html(collapsible['content-with-value']))
+        collapsible['content-with-value'] = escape_html(
+            json.dumps(rte_conversion_fn(content_html)))
+
+        # To ensure that collapsible tags have heading-with-value attribute.
+        if 'heading-with-value' not in collapsible.attrs:
+            collapsible['heading-with-value'] = escape_html(json.dumps(''))
+
+    for tabs in soup.findAll(name='oppia-noninteractive-tabs'):
         tab_content_json = unescape_html(tabs['tab_contents-with-value'])
         tab_content_list = json.loads(tab_content_json)
         for index, tab_content in enumerate(tab_content_list):
@@ -651,17 +689,22 @@ def validate_rte_format(html_list, rte_format, run_migration=False):
         if is_invalid:
             err_dict['strings'].append(html_data)
 
-        for collapsible in soup.findAll('oppia-noninteractive-collapsible'):
-            content_html = json.loads(
-                unescape_html(collapsible['content-with-value']))
-            soup_for_collapsible = bs4.BeautifulSoup(
-                content_html.replace('<br>', '<br/>'), 'html.parser')
-            is_invalid = _validate_soup_for_rte(
-                soup_for_collapsible, rte_format, err_dict)
+        for collapsible in soup.findAll(
+                name='oppia-noninteractive-collapsible'):
+            if 'content-with-value' not in collapsible.attrs or (
+                    collapsible['content-with-value'] == ''):
+                is_invalid = True
+            else:
+                content_html = json.loads(
+                    unescape_html(collapsible['content-with-value']))
+                soup_for_collapsible = bs4.BeautifulSoup(
+                    content_html.replace('<br>', '<br/>'), 'html.parser')
+                is_invalid = _validate_soup_for_rte(
+                    soup_for_collapsible, rte_format, err_dict)
             if is_invalid:
                 err_dict['strings'].append(html_data)
 
-        for tabs in soup.findAll('oppia-noninteractive-tabs'):
+        for tabs in soup.findAll(name='oppia-noninteractive-tabs'):
             tab_content_json = unescape_html(tabs['tab_contents-with-value'])
             tab_content_list = json.loads(tab_content_json)
             for tab_content in tab_content_list:
@@ -726,3 +769,24 @@ def _validate_soup_for_rte(soup, rte_format, err_dict):
             is_invalid = True
 
     return is_invalid
+
+
+def add_caption_attr_to_image(html_string):
+    """Adds caption attribute to all oppia-noninteractive-image tags.
+
+    Args:
+        html_string. str: HTML string in which the caption attribute is to be
+            added.
+
+    Returns:
+        str. Updated HTML string with the caption attribute for all
+            oppia-noninteractive-image tags.
+    """
+    soup = bs4.BeautifulSoup(html_string.encode('utf-8'), 'html.parser')
+
+    for image in soup.findAll(name='oppia-noninteractive-image'):
+        attrs = image.attrs
+        if 'caption-with-value' not in attrs:
+            image['caption-with-value'] = escape_html(json.dumps(''))
+
+    return unicode(soup)

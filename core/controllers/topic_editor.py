@@ -18,7 +18,9 @@ are created.
 
 from core.controllers import base
 from core.domain import acl_decorators
+from core.domain import question_services
 from core.domain import role_services
+from core.domain import skill_services
 from core.domain import story_domain
 from core.domain import story_services
 from core.domain import subtopic_page_domain
@@ -39,6 +41,8 @@ class TopicEditorStoryHandler(base.BaseHandler):
     def get(self, topic_id):
         """Handles GET requests."""
 
+        if not feconf.ENABLE_NEW_STRUCTURES:
+            raise self.PageNotFoundException
         topic = topic_services.get_topic_by_id(topic_id)
         canonical_story_summaries = story_services.get_story_summaries_by_ids(
             topic.canonical_story_ids)
@@ -81,6 +85,36 @@ class TopicEditorStoryHandler(base.BaseHandler):
         self.render_json({
             'storyId': new_story_id
         })
+
+
+class TopicEditorQuestionHandler(base.BaseHandler):
+    """Manages the creation of a question and receiving of all question
+    summaries for display in topic editor page.
+    """
+
+    @acl_decorators.can_edit_topic
+    def get(self, topic_id):
+        """Handles GET requests."""
+        if not feconf.ENABLE_NEW_STRUCTURES:
+            raise self.PageNotFoundException
+        topic_domain.Topic.require_valid_topic_id(topic_id)
+
+        start_cursor = self.request.get('cursor')
+        topic = topic_services.get_topic_by_id(topic_id)
+        skill_ids = topic.get_all_skill_ids()
+
+        question_summaries, next_start_cursor = (
+            question_services.get_question_summaries_linked_to_skills(
+                skill_ids, start_cursor)
+        )
+        question_summary_dicts = [
+            summary.to_dict() for summary in question_summaries]
+
+        self.values.update({
+            'question_summary_dicts': question_summary_dicts,
+            'next_start_cursor': next_start_cursor
+        })
+        self.render_json(self.values)
 
 
 class TopicEditorPage(base.BaseHandler):
@@ -183,8 +217,14 @@ class EditableTopicDataHandler(base.BaseHandler):
             raise self.PageNotFoundException(
                 Exception('The topic with the given id doesn\'t exist.'))
 
+        skill_ids = topic.get_all_skill_ids()
+
+        skill_id_to_description_dict = (
+            skill_services.get_skill_descriptions_by_ids(topic_id, skill_ids))
+
         self.values.update({
-            'topic': topic.to_dict()
+            'topic_dict': topic.to_dict(),
+            'skill_id_to_description_dict': skill_id_to_description_dict
         })
 
         self.render_json(self.values)
@@ -228,10 +268,15 @@ class EditableTopicDataHandler(base.BaseHandler):
         except utils.ValidationError as e:
             raise self.InvalidInputException(e)
 
-        topic_dict = topic_services.get_topic_by_id(topic_id).to_dict()
+        topic = topic_services.get_topic_by_id(topic_id, strict=False)
+        skill_ids = topic.get_all_skill_ids()
+
+        skill_id_to_description_dict = (
+            skill_services.get_skill_descriptions_by_ids(topic_id, skill_ids))
 
         self.values.update({
-            'topic': topic_dict
+            'topic_dict': topic.to_dict(),
+            'skill_id_to_description_dict': skill_id_to_description_dict
         })
 
         self.render_json(self.values)

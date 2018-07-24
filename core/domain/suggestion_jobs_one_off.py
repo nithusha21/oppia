@@ -17,12 +17,13 @@
 """One-off jobs relating to suggestions."""
 
 from core import jobs
-from core.domain import suggestion_services
 from core.platform import models
-(suggestion_models,) = models.Registry.import_models([models.NAMES.suggestion])
 
-def populate_user_contributions_scoring_model(
-        jobs.BaseMapReduceOneOffJobManager):
+(suggestion_models, user_models) = models.Registry.import_models(
+    [models.NAMES.suggestion, models.NAMES.user])
+
+
+class PopulateUserContributionsScoringModel(jobs.BaseMapReduceOneOffJobManager):
     """One-off job to populate scores for contributions of users in the old
     system.
     """
@@ -33,7 +34,14 @@ def populate_user_contributions_scoring_model(
     @staticmethod
     def map(suggestion):
         if suggestion.status == suggestion_models.STATUS_ACCEPTED:
-            yield (suggestion.score_category, suggestion.author_id)
+            user_contribution_scoring_model_id = '%s.%s' % (
+                suggestion.score_category, suggestion.author_id)
+            yield (user_contribution_scoring_model_id, 1)
 
     @staticmethod
     def reduce(key, value):
+        score = len(value)
+        score_category = key[: key.rfind('.')]
+        user_id = key[key.rfind('.') + 1:]
+        user_models.UserContributionScoringModel.create(
+            user_id, score_category, score)

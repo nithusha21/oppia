@@ -12,8 +12,8 @@ addons:
 
 branches:
   only:
-    - develop
-    - e2e-tests-feedback
+    - gh-pages
+    - /.*/
 #  only:
 #  - master
 #  - develop

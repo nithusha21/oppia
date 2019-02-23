@@ -11,8 +11,9 @@ addons:
     access_key: $ACCESS_KEY
 
 branches:
-  except:
-    - temp
+  only:
+    - develop
+    - e2e-tests-feedback
 #  only:
 #  - master
 #  - develop

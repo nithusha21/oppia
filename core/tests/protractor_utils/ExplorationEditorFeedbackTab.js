@@ -39,6 +39,8 @@ var ExplorationEditorFeedbackTab = function() {
     by.css('.protractor-test-suggestion-commit-message'));
   var suggestionReviewMessageInput = element(
     by.css('.protractor-test-suggestion-review-message'));
+  var threadStatusDropdown = element(
+    by.css('.protractor-test-thread-status-dropdown'));
   /*
    * Buttons
    */
@@ -137,6 +139,16 @@ var ExplorationEditorFeedbackTab = function() {
   this.sendResponseToLatestFeedback = function(feedbackResponse) {
     element.all(by.css('.protractor-test-oppia-feedback-tab-row')).
       first().click();
+    feedbackResponseTextArea.sendKeys(feedbackResponse);
+    feedbackSendResponseButton.click();
+  };
+
+  this.changeThreadStatus = function(status, feedbackResponse) {
+    element.all(by.css('.protractor-test-oppia-feedback-tab-row')).
+      first().click();
+    var statusOption = threadStatusDropdown.element(
+      by.cssContainingText('option', status));
+    statusOption.click();
     feedbackResponseTextArea.sendKeys(feedbackResponse);
     feedbackSendResponseButton.click();
   };

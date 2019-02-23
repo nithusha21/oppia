@@ -42,7 +42,7 @@ describe('ExplorationFeedback', function() {
   var libraryPage = null;
   var explorationPlayerPage = null;
 
-  beforeEach(function() {
+  beforeAll(function() {
     explorationEditorPage = new ExplorationEditorPage.ExplorationEditorPage();
     explorationEditorFeedbackTab = explorationEditorPage.getFeedbackTab();
     creatorDashboardPage = new CreatorDashboardPage.CreatorDashboardPage();
@@ -50,26 +50,29 @@ describe('ExplorationFeedback', function() {
     explorationPlayerPage = new ExplorationPlayerPage.ExplorationPlayerPage();
   });
 
-  beforeEach(function() {
+  beforeAll(function() {
     users.createUser(
       'user1@ExplorationFeedback.com',
       'creatorExplorationFeedback');
     users.createUser(
       'user2@ExplorationFeedback.com',
       'learnerExplorationFeedback');
-  });
 
-  it('adds feedback to an exploration', function() {
-    var feedback = 'A good exploration. Would love to see a few more questions';
-    var feedbackResponse = 'Thanks for the feedback';
-
-    // Creator creates and publishes an exploration.
     users.login('user1@ExplorationFeedback.com');
     workflow.createAndPublishExploration(
       EXPLORATION_TITLE,
       EXPLORATION_CATEGORY,
       EXPLORATION_OBJECTIVE,
       EXPLORATION_LANGUAGE);
+    users.logout()
+  });
+
+  it('adds feedback to an exploration', function() {
+    var feedback = 'A good exploration. Would love to see a few more questions';
+    var feedbackResponse = 'Thanks for the feedback';
+
+    // Creator expects 0 feedback messages initially.
+    users.login('user1@ExplorationFeedback.com');
     creatorDashboardPage.get();
     expect(
       creatorDashboardPage.getNumberOfFeedbackMessages()
@@ -87,9 +90,7 @@ describe('ExplorationFeedback', function() {
     // Creator reads the feedback and responds.
     users.login('user1@ExplorationFeedback.com');
     creatorDashboardPage.get();
-    expect(
-      creatorDashboardPage.getNumberOfFeedbackMessages()
-    ).toEqual(1);
+    expect(creatorDashboardPage.getNumberOfFeedbackMessages()).toEqual(1);
     creatorDashboardPage.navigateToExplorationEditor();
 
     explorationEditorPage.navigateToFeedbackTab();
@@ -101,6 +102,37 @@ describe('ExplorationFeedback', function() {
       });
     explorationEditorPage.navigateToFeedbackTab();
     explorationEditorFeedbackTab.sendResponseToLatestFeedback(feedbackResponse);
+    users.logout();
+  });
+
+  fit('changes status and subject of feedback threads', function() {
+    var feedback = 'A good exploration. Would love to see a few more questions';
+    var feedbackResponse = 'Thanks for the feedback';
+
+    // Learner plays the exploration and submits a feedback.
+    users.login('user2@ExplorationFeedback.com');
+    libraryPage.get();
+    libraryPage.findExploration(EXPLORATION_TITLE);
+    libraryPage.playExploration(EXPLORATION_TITLE);
+    explorationPlayerPage.submitFeedback(feedback);
+    users.logout();
+
+    // Creator reads the feedback and responds.
+    users.login('user1@ExplorationFeedback.com');
+    creatorDashboardPage.get();
+    expect(creatorDashboardPage.getNumberOfFeedbackMessages()).toEqual(1);
+    creatorDashboardPage.navigateToExplorationEditor();
+
+    explorationEditorPage.navigateToFeedbackTab();
+    explorationEditorFeedbackTab.expectToHaveFeedbackThread();
+    explorationEditorFeedbackTab.changeThreadStatus('Fixed', feedbackResponse);
+    explorationEditorPage.navigateToFeedbackTab();
+    explorationEditorFeedbackTab.readFeedbackMessages()
+      .then(function(messages) {
+        expect(messages.length).toEqual(2);
+        expect(messages[0]).toEqual(feedbackResponse);
+      });
+    explorationEditorPage.navigateToFeedbackTab();
     users.logout();
   });
 

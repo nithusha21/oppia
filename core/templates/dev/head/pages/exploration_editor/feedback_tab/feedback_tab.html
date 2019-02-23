@@ -116,7 +116,8 @@
         <div>
           <span ng-show="EditabilityService.isEditable() && !activeThread.isSuggestionThread()">
             Change status (optional):
-            <select ng-model="tmpMessage.status"
+            <select class = "protractor-test-thread-status-dropdown"
+                    ng-model="tmpMessage.status"
                     ng-options="choice.id as choice.text for choice in STATUS_CHOICES"
                     ng-disabled="messageSendingInProgress">
             </select>

@@ -10,8 +10,9 @@ addons:
     username: $USERNAME
     access_key: $ACCESS_KEY
 
-#branches:
-#  only:
+branches:
+  only:
+   - /.*/
 #  - master
 #  - develop
 #  - /^release-\d+\.\d+\.\d+$/

@@ -11,8 +11,9 @@ addons:
     access_key: $ACCESS_KEY
 
 branches:
-  only:
-   - /.*/
+  except:
+    - temp
+#  only:
 #  - master
 #  - develop
 #  - /^release-\d+\.\d+\.\d+$/

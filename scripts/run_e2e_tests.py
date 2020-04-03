@@ -34,7 +34,7 @@ from scripts import install_third_party_libs
 from scripts import setup
 from scripts import setup_gae
 
-CHROME_DRIVER_VERSION = '79.0.3945.36'
+CHROME_DRIVER_VERSION = '80.0.3987.106'
 
 WEB_DRIVER_PORT = 4444
 GOOGLE_APP_ENGINE_PORT = 9001

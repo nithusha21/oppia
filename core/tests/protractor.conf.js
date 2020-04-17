@@ -140,6 +140,26 @@ var suites = {
     users: [
       'protractor_desktop/userJourneys.js',
     ],
+
+    suite1: [
+      'protractor_desktop/additionalEditorFeatures.js',
+      'protractor_desktop/additionalPlayerFeatures.js'
+    ],
+
+    suite2: [
+      'protractor_desktop/classroomPage.js',
+      'protractor_desktop/collections.js',
+      'protractor_desktop/extensions.js'
+    ],
+
+    suite3: [
+      'protractor_desktop/coreEditorAndPlayerFeatures.js'
+    ],
+
+    suite4: [
+      'protractor_desktop/explorationImprovementsTab.js',
+      'protractor_desktop/explorationStatisticsTab.js'
+    ]
   };
 
 // A reference configuration file.
